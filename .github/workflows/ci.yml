@@ -1,0 +1,116 @@
+name: Airflow DAG CI
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+    paths:
+      - src/**
+      - tests/**
+      - .github/workflows/ci.yml
+  pull_request:
+    branches: [ "main", "dev" ]
+    paths:
+      - src/**
+      - tests/**
+      - .github/workflows/ci.yml
+
+
+
+jobs:
+  ci-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10.12"
+
+      - name: Set commit range for diff
+        id: commit-range
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "range=${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+            echo "Checking PR changes: ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            echo "range=${{ github.event.before }}...${{ github.event.after }}" >> $GITHUB_OUTPUT
+            echo "Checking push changes: ${{ github.event.before }}...${{ github.event.after }}"
+          else
+            echo "range=HEAD~1...HEAD" >> $GITHUB_OUTPUT
+            echo "Defaulting to changes in last commit"
+          fi
+
+      - name: Check for changed requirements
+        id: changed-reqs
+        run: |
+          CHANGED_FILES=$(git diff --name-only ${{ steps.commit-range.outputs.range }} -- src/requirements-base.txt src/requirements.txt || true)
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "✅ No requirement files changed in this commit range."
+            echo "Cache *should* be a HIT (if a cache exists)."
+          else
+            echo "⚠️ Found changed requirement files (cache *may* be a MISS):"
+            echo "$CHANGED_FILES"
+          fi
+
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache base dependencies
+        uses: actions/cache@v4
+        id: cache-base
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ runner.os }}-pip-base-${{ hashFiles('src/requirements-base.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-base-
+
+      - name: Cache all dependencies
+        uses: actions/cache@v4
+        id: cache-full
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ runner.os }}-pip-full-${{ hashFiles('src/requirements-base.txt', 'src/requirements-lib.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-base-${{ hashFiles('src/requirements-base.txt') }}
+            ${{ runner.os }}-pip-base-
+
+      - name: Install dependencies (base, project)
+        working-directory: src
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-base.txt
+          pip install -r requirements.txt
+
+      - name: Install dependencies (libs)
+        working-directory: src/lib
+        run: |
+          pip install -r requirements-lib.txt
+
+      - name: Set Mock Airflow Env
+        run: |
+          airflow db init
+
+      - name: Run pytest
+        run: |
+          pytest -v --disable-warnings
+
+      - name: Linting with ruff
+        run: |
+          ruff check ./src/dags ./src/plugins tests
+          
+
+      - name: 📋 Report cache status
+        if: always()
+        run: |
+          echo "--- Cache Status Report ---"
+          echo "Base Cache (requirements-base.txt): ${{ steps.cache-base.outputs.cache-hit == 'true' && '✅ HIT' || '❌ MISS' }}"
+          echo "Full Cache (requirements.txt): ${{ steps.cache-full.outputs.cache-hit == 'true' && '✅ HIT' || '❌ MISS' }}"
+          echo "---------------------------"

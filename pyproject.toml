@@ -1,0 +1,30 @@
+[project]
+name = "airflow-boilerpalte"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10.11"
+dependencies = [
+    "ansible>=10.7.0",
+    "apache-airflow==2.9.1",
+    "apache-airflow-providers-standard>=0.0.1",
+    "pytest>=9.0.0",
+    "lib-a",
+    "lib-b",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.4",
+]
+
+[tool.uv.workspace]
+members = [
+    "src/lib/lib-a",
+    "src/lib/lib-b",
+]
+
+[tool.uv.sources]
+custom-package = { workspace = true }
+lib-a = { workspace = true }
+lib-b = { workspace = true }

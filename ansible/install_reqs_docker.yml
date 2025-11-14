@@ -1,0 +1,28 @@
+---
+- name: "Copy requirements.txt to Docker container and install packages"
+  hosts: local_airflow_containers
+  gather_facts: no
+
+  tasks:
+    - name: "1. Copy local 'requirements.txt' to container's '/tmp/reqs_from_ansible.txt'"
+
+      ansible.builtin.copy:
+        src: ../src/requirements.txt
+        dest: /tmp/reqs_from_ansible.txt
+        mode: '0644'
+
+    - name: "2. Install Python packages inside the container using pip and the copied requirements file"
+      ansible.builtin.pip:
+        requirements: /tmp/reqs_from_ansible.txt
+        extra_args: --no-cache-dir
+      register: r_pip_install
+      changed_when: "'Requirement already satisfied' not in r_pip_install.stdout"
+
+    - name: "3. Remove the copied requirements file from the container"
+      ansible.builtin.file:
+        path: /tmp/reqs_from_ansible.txt
+        state: absent
+
+    - name: "4. Display pip install output"
+      ansible.builtin.debug:
+        var: r_pip_install.stdout_lines
