@@ -1,5 +1,6 @@
 import pytest
 
+from utils.file_utils import get_absolute_path
 from utils.yfinance_df_cleaner import YFinanceNewsCleaner
 import pandas as pd
 
@@ -8,7 +9,7 @@ import pandas as pd
 def news_df():
     import pandas as pd
 
-    return pd.read_parquet("./data/news_mock.parquet")
+    return pd.read_parquet(get_absolute_path("./data/news_mock.parquet"))
 
 
 def test_rename_columns(news_df):
