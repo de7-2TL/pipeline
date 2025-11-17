@@ -2,25 +2,20 @@ from hooks.yfinance_hook import YfinanceNewsHook
 
 def test_ticker():
     # given
-    expected_industry_key = "semiconductors"
-    expected_sector_key = "technology"
-    company = "AMD"
+    company = ["AMD", "AAPL"]
     target = YfinanceNewsHook(company)
-    page_size = 5
 
     # when
-    result = target.get_news(page_size)
+    result = target.get_news()
 
     # then
-    assert result['company_info'] is not None
-    assert result['company_info']['sectorKey'] == expected_sector_key
-    assert result['company_info']['industryKey'] == expected_industry_key
-    assert len(result['news']) == page_size
+    for v in result:
+        assert v['company_key'] in company
 
 
 def test_do_not_call_get_conn_directly():
     # given
-    company = "AMD"
+    company = ["AMD", "AAPL"]
     target = YfinanceNewsHook(company)
 
     # when / then

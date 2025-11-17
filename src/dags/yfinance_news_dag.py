@@ -1,10 +1,9 @@
 import logging
-import os
 
 import pendulum
 from airflow import DAG
-from airflow.exceptions import AirflowSkipException
-from airflow.utils.task_group import TaskGroup
+from airflow.exceptions import AirflowSkipException, AirflowException
+from airflow.models import TaskInstance
 from airflow.utils.trigger_rule import TriggerRule
 
 from hooks.company_hook import (
@@ -13,15 +12,17 @@ from hooks.company_hook import (
 from hooks.s3_hook import S3ParquetHook
 from hooks.yfinance_hook import YfinanceNewsHook
 import pandas as pd
-from airflow.operators.python import PythonOperator
+from airflow.operators.python import PythonOperator, task
 from airflow.operators.empty import EmptyOperator
 
-YFINANCE_NEWS_DIR_PATH = "/opt/airflow/data/temp/yfinance_news"
+
+YFINANCE_NEWS_DIR_TEMP_PATH = "/opt/airflow/data/temp/yfinance_news"
 S3_NEWS_PATH = "s3://de07-project03/news"
 
 
-def _extract_yfinance_news(company_keys: list[str]) -> str:
-    logging.info(f"fetch yfinance news data for {company_keys}")
+def _extract_yfinance_news(ti: TaskInstance) -> str:
+    company_keys = ti.xcom_pull(task_ids="get_company_keys", key="return_value")
+    logging.info(f"fetch yfinance news data for {len(company_keys)}")
     """
     Yfinance에서 특정 회사의 뉴스를 가져와서 저장합니다.
     :param company_key: 회사 티커
@@ -39,7 +40,7 @@ def _extract_yfinance_news(company_keys: list[str]) -> str:
 
     news_df = pd.json_normalize(news_json_list)
     df = _clear_news_df(news_df)
-    output_path = f"{YFINANCE_NEWS_DIR_PATH}/{'-'.join(company_keys)}.parquet"
+    output_path = f"{YFINANCE_NEWS_DIR_TEMP_PATH}/{ti.execution_date}.parquet"
 
     df.to_parquet(output_path)
     logging.info(f"success saved news to {output_path}")
@@ -80,41 +81,14 @@ def _clear_news_df(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def _create_yfinance_news_extract_task(**kwargs):
-    """
-    조회 대상 회사 목록을 조회하여 각각에 대해 뉴스를 추출하는 태스크를 생성합니다.
-
-    :param kwargs:
-    :type kwargs:
-    :return:
-    :rtype:
-    """
-    if not os.path.exists(YFINANCE_NEWS_DIR_PATH):
-        os.makedirs(YFINANCE_NEWS_DIR_PATH)
-
+def _get_company_keys() -> list[str]:
     conn = SnowflakeCompanyHook("snowflake_conn")
-
-    def chunk_list(data_list, n):
-        chunk_size = max(1, len(data_list) // n)
-
-        return [
-            data_list[i : i + chunk_size] for i in range(0, len(data_list), chunk_size)
-        ]
-
-    company_chunks = chunk_list(conn.get_company_info(), 10)
-
-    return [
-        PythonOperator(
-            task_id=f"save_yfinance_news_group_{i}",
-            python_callable=_extract_yfinance_news,
-            op_kwargs={"company_keys": chunk},
-            pool="yfinance_news_pool",
-        )
-        for i, chunk in enumerate(company_chunks)
-    ]
+    return conn.get_company_info()
 
 
-def _load_temp_to_s3(conn_id: str, **kwargs) -> str:
+
+
+def _load_temp_to_s3(conn_id: str) -> str:
     """
     추출된 yfinance 뉴스를 통합하여 저장합니다.
     :param kwargs:
@@ -124,10 +98,15 @@ def _load_temp_to_s3(conn_id: str, **kwargs) -> str:
     """
 
     hook = S3ParquetHook(conn_id)
-    df = pd.read_parquet(YFINANCE_NEWS_DIR_PATH)
+    df = pd.read_parquet(YFINANCE_NEWS_DIR_TEMP_PATH)
 
     hook.upload_split_df(df, s3_path=S3_NEWS_PATH, partition_cols=["date"])
 
+def _teardown():
+    import shutil
+    shutil.rmtree(YFINANCE_NEWS_DIR_TEMP_PATH)
+
+    logging.info(f"teardown yfinance news data")
 
 with DAG(
     dag_id="yfinance_news_dag",
@@ -137,10 +116,16 @@ with DAG(
 ) as dag:
     start_task = EmptyOperator(task_id="start_task")
 
-    with TaskGroup(
-        "extract_yfinance_news_task_group"
-    ) as extract_yfinance_news_task_group:
-        _create_yfinance_news_extract_task()
+    get_company_keys = PythonOperator(
+        task_id="get_company_keys",
+        python_callable=_get_company_keys,
+    )
+
+    extract_yfinance_news = PythonOperator(
+        task_id="extract_yfinance_news",
+        python_callable=_extract_yfinance_news,
+    )
+
 
     load_temp_to_s3 = PythonOperator(
         task_id="load_temp_to_s3",
@@ -149,6 +134,20 @@ with DAG(
         trigger_rule=TriggerRule.NONE_FAILED
     )
 
+    teardown = PythonOperator(
+        task_id="teardown",
+        python_callable=_teardown,
+        doc_md="임시로 저장된 yfinance 뉴스를 삭제합니다.",
+        trigger_rule=TriggerRule.ALL_DONE,
+    )
+
+    @task(trigger_rule=TriggerRule.ONE_FAILED, retries=0)
+    def watcher():
+        raise AirflowException(
+            "Failing task because one or more upstream tasks failed."
+        )
 
 
-    start_task >> extract_yfinance_news_task_group >> load_temp_to_s3
+
+    start_task >> get_company_keys >> extract_yfinance_news >> load_temp_to_s3 >> teardown
+    list(dag.tasks) >> watcher()
