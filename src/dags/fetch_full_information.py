@@ -22,6 +22,13 @@ SECTOR_LIST = [
 #############################
 
 def fetch_sector_df(**context):
+    '''
+    sector 데이터를 yfinance에서 가져옴
+    xcom에 sector_df로 저장
+
+    Returns:
+        pd.DataFrame: sector 정보가 담긴 DataFrame
+    '''
     sector_data = []
     for sector in SECTOR_LIST:
         sec = yf.Sector(sector)
@@ -42,6 +49,14 @@ def fetch_sector_df(**context):
 
 
 def fetch_industry_df(**context):
+    '''
+    industry 데이터를 yfinance에서 가져옴
+    xcom에 industry_df로 저장
+
+    Returns:
+        pd.DataFrame: industry 정보가 담긴 DataFrame
+    '''
+
     ti = context["ti"]
     sector_df = ti.xcom_pull(key="sector_df", task_ids="fetch_sector")
 
@@ -76,6 +91,14 @@ def fetch_industry_df(**context):
 
 
 def fetch_company_df(**context):
+    '''
+    company 데이터를 yfinance에서 가져옴
+    xcom에 company_df로 저장
+
+    Returns:
+        pd.DataFrame: company 정보가 담긴 DataFrame
+
+    '''
     ti = context["ti"]
     industry_df = ti.xcom_pull(key="industry_df", task_ids="fetch_industry")
 
