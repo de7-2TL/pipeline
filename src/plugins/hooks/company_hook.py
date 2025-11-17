@@ -1,20 +1,10 @@
-from abc import ABC
 from airflow.hooks.base import BaseHook
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 
-class AbstractCompanyHook(BaseHook, ABC):
-    """
-    Source에서 회사 목록을 조회하는 Hook Interface
-    """
-    conn_id = None
-
-    def get_company_info(self) -> list[str]:
-        raise NotImplementedError()
 
 
-
-class SnowflakeCompanyHook(AbstractCompanyHook):
+class SnowflakeCompanyHook(BaseHook):
     """
     Snowflake의 COMPANY_INFO 테이블에서
     회사의 company_symbol 리스트를 반환하는 Hook

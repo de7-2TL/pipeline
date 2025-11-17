@@ -1,2 +1,7 @@
 pytest
 ruff
+pytest-mock
+pytest-docker-tools
+yfinance
+awswrangler
+boto3
