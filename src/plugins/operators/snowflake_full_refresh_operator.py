@@ -30,5 +30,7 @@ class SnowflakeFullRefreshOperator(BaseOperator):
                 f"SELECT * FROM dev.raw_data.{temp}"
             )
             cur.execute(f"DROP TABLE IF EXISTS dev.raw_data.{temp}")
-
-        return f"Refreshed: {self.table_name}"
+        
+        return_msg = f"Refreshed: {self.table_name}"
+        self.log.info(return_msg)
+        return return_msg
