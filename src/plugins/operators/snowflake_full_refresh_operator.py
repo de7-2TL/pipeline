@@ -15,7 +15,7 @@ class SnowflakeFullRefreshOperator(BaseOperator):
 
         df = ti.xcom_pull(task_ids=self.source_task_id, key=self.xcom_key)
         if df is None:
-            raise ValueError("❌ XCom에서 DataFrame을 가져오지 못했습니다.")
+            raise ValueError("No data found in XCom for the given task and key.")
 
         # full refresh 로직 동일
         hook = SnowflakeDevRawDataHook()
