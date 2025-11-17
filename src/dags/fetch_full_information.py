@@ -21,7 +21,7 @@ SECTOR_LIST = [
 # Fetch Functions
 #############################
 
-def fetch_sector_df(**context):
+def fetch_sector_df(**context) -> pd.DataFrame:
     '''
     sector 데이터를 yfinance에서 가져옴
     xcom에 sector_df로 저장
@@ -48,7 +48,7 @@ def fetch_sector_df(**context):
     return df
 
 
-def fetch_industry_df(**context):
+def fetch_industry_df(**context) -> pd.DataFrame:
     '''
     industry 데이터를 yfinance에서 가져옴
     xcom에 industry_df로 저장
@@ -90,7 +90,7 @@ def fetch_industry_df(**context):
     return df
 
 
-def fetch_company_df(**context):
+def fetch_company_df(**context) -> pd.DataFrame:
     '''
     company 데이터를 yfinance에서 가져옴
     xcom에 company_df로 저장
