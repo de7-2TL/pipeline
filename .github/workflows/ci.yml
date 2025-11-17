@@ -100,6 +100,7 @@ jobs:
 
       - name: Run pytest
         run: |
+          export PYTHONPATH=./src/dags:./src/plugins:$PYTHONPATH
           pytest -v --disable-warnings
 
       - name: Linting with ruff
