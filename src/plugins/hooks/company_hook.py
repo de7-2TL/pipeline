@@ -2,8 +2,6 @@ from airflow.hooks.base import BaseHook
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
 
-
-
 class SnowflakeCompanyHook(BaseHook):
     """
     Snowflake의 COMPANY_INFO 테이블에서
@@ -17,11 +15,10 @@ class SnowflakeCompanyHook(BaseHook):
     def get_company_info(self) -> list[str]:
         """
         company symbol list 조회
-        
+
         Returns:
             list[str]: 회사의 company_symbol 리스트
         """
-
 
         query = """
             SELECT company_symbol
@@ -33,5 +30,3 @@ class SnowflakeCompanyHook(BaseHook):
 
         # company_symbol column → list[str]
         return df["COMPANY_SYMBOL"].dropna().tolist()
-
-

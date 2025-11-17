@@ -1,5 +1,6 @@
 from hooks.yfinance_hook import YfinanceNewsHook
 
+
 def test_ticker():
     # given
     company = ["AMD", "AAPL"]
@@ -10,7 +11,7 @@ def test_ticker():
 
     # then
     for v in result:
-        assert v['company_key'] in company
+        assert v["company_key"] in company
 
 
 def test_do_not_call_get_conn_directly():
@@ -24,7 +25,3 @@ def test_do_not_call_get_conn_directly():
         assert False, "Expected an exception when calling get_conn directly"
     except Exception as e:
         assert str(e) != ""
-
-
-
-

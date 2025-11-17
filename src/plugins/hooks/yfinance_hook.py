@@ -15,13 +15,11 @@ class YfinanceNewsHook(BaseHook):
     session = None
 
     def __init__(self, companies: list[str]) -> None:
-
         if not companies:
             raise ValueError("Company ticker must be provided")
 
         super().__init__("yfinance.task.hooks")
         self._companies = companies
-
 
     def get_conn(self) -> Any:
         """
@@ -41,7 +39,6 @@ class YfinanceNewsHook(BaseHook):
     def _is_called_internally(self) -> bool:
         caller_self = inspect.currentframe().f_back.f_locals.get("self")
         return isinstance(caller_self, self.__class__)
-
 
     def get_news(self) -> list[dict[str, Any]]:
         """
@@ -63,4 +60,3 @@ class YfinanceNewsHook(BaseHook):
             for news_item in news_list
         ]
         return all_news_records
-

@@ -86,8 +86,6 @@ def _get_company_keys() -> list[str]:
     return conn.get_company_info()
 
 
-
-
 def _load_temp_to_s3(conn_id: str) -> str:
     """
     추출된 yfinance 뉴스를 통합하여 저장합니다.
@@ -102,11 +100,14 @@ def _load_temp_to_s3(conn_id: str) -> str:
 
     hook.upload_split_df(df, s3_path=S3_NEWS_PATH, partition_cols=["date"])
 
+
 def _teardown():
     import shutil
+
     shutil.rmtree(YFINANCE_NEWS_DIR_TEMP_PATH)
 
     logging.info("teardown yfinance news data")
+
 
 with DAG(
     dag_id="yfinance_news_dag",
@@ -126,12 +127,11 @@ with DAG(
         python_callable=_extract_yfinance_news,
     )
 
-
     load_temp_to_s3 = PythonOperator(
         task_id="load_temp_to_s3",
         python_callable=_load_temp_to_s3,
         op_kwargs={"conn_id": "aws_conn"},
-        trigger_rule=TriggerRule.NONE_FAILED
+        trigger_rule=TriggerRule.NONE_FAILED,
     )
 
     teardown = PythonOperator(
@@ -147,7 +147,11 @@ with DAG(
             "Failing task because one or more upstream tasks failed."
         )
 
-
-
-    start_task >> get_company_keys >> extract_yfinance_news >> load_temp_to_s3 >> teardown
+    (
+        start_task
+        >> get_company_keys
+        >> extract_yfinance_news
+        >> load_temp_to_s3
+        >> teardown
+    )
     list(dag.tasks) >> watcher()

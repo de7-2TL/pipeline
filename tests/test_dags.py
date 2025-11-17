@@ -19,15 +19,9 @@ def test_dag_loaded(dag_bag, mocker):
         "get_conn",
         return_value=(
             Connection(
-                conn_id="test_conn",
-                login="fake_access_key",
-                password="fake_secret"
+                conn_id="test_conn", login="fake_access_key", password="fake_secret"
             )
         ),
     )
 
-
-
     assert not dag_bag.import_errors, f"DAG Import Errors: {dag_bag.import_errors}"
-
-
