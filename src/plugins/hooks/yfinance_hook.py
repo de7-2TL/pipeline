@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Optional
+from typing import Any
 
 from airflow.hooks.base import BaseHook
 import yfinance as yf

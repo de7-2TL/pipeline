@@ -106,7 +106,7 @@ def _teardown():
     import shutil
     shutil.rmtree(YFINANCE_NEWS_DIR_TEMP_PATH)
 
-    logging.info(f"teardown yfinance news data")
+    logging.info("teardown yfinance news data")
 
 with DAG(
     dag_id="yfinance_news_dag",
