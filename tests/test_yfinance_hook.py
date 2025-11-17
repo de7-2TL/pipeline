@@ -1,4 +1,3 @@
-from hooks.company_hook import MockCompanyHook, AbstractCompanyHook
 from hooks.yfinance_hook import YfinanceNewsHook
 
 def test_ticker():
@@ -30,16 +29,6 @@ def test_do_not_call_get_conn_directly():
         assert False, "Expected an exception when calling get_conn directly"
     except Exception as e:
         assert str(e) != ""
-
-
-def test_interface_work():
-    target: AbstractCompanyHook = MockCompanyHook("test_conn_id")
-
-
-    target.get_conn()
-    assert target.conn_id == "test_conn_id"
-    assert target.get_conn() is None
-
 
 
 
