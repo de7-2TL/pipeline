@@ -17,9 +17,9 @@ SECTOR_LIST = [
     "industrials", "real-estate", "technology", "utilities"
 ]
 
-# =========================
-# 1. Fetch functions
-# =========================
+############################
+# Fetch Functions
+#############################
 
 def fetch_sector_df(**context):
     sector_data = []
@@ -113,6 +113,8 @@ def fetch_company_df(**context):
     print(f"[Company] {len(df)} rows loaded. Skipped industries: {len(skipped)}")
     return df
 
+
+# watcher task
 @task(trigger_rule=TriggerRule.ONE_FAILED, retries=0)
 def watcher():
     raise AirflowException(
