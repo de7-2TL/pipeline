@@ -25,6 +25,8 @@ dependencies = [
     "boto3>=1.40.70",
     "apache-airflow-providers-snowflake>=6.2.2",
     "dotenv>=0.9.9",
+    "dbt-snowflake>=1.9.2",
+    "dbt-core>=1.9.4",
 ]
 
 [dependency-groups]

@@ -1,11 +1,9 @@
 pytest
 ruff
-yfinance
-click==8.0.4
-dbt-core==1.7.4
-dbt-snowflake==1.7.2
 pytest-mock
 pytest-docker-tools
 yfinance
 awswrangler
-boto3
+dbt-core==1.8.4
+dbt-snowflake==1.8.4
+astronomer-cosmos==1.11.0
