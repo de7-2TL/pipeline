@@ -1,7 +1,9 @@
 pytest
 ruff
 yfinance
-dbt-snowflake
+click==8.0.4
+dbt-core==1.7.4
+dbt-snowflake==1.7.2
 pytest-mock
 pytest-docker-tools
 yfinance
