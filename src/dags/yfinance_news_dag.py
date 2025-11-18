@@ -108,14 +108,10 @@ def _transform_news(s3_conn_id: str, ti: TaskInstance) -> str:
     meta_df = hook.get_files(S3_NEWS_META_PATH)
     output_path = f"{YFINANCE_NEWS_META_TEMP_PATH}/{ti.execution_date.strftime('%Y-%m-%d')}.parquet"
 
-    if meta_df is not None and not meta_df.empty:
-        logging.info("Remove duplicated news based on content_id")
+    cleaner = YFinanceNewsCleaner(df)
+    cleaner.filter_duplicates_by_meta(meta_df, keys=["content_id", "company_key"])
 
-        df = df[~df["content_id"].isin(meta_df["content_id"])]
-
-    logging.info("result news count after clear deduplication: {}".format(len(df)))
-    df.to_parquet(output_path)
-
+    cleaner.target.to_parquet(output_path)
     return output_path
 
 
@@ -131,10 +127,15 @@ def _load_temp_to_s3(conn_id: str, ti: TaskInstance) -> str:
     hook = S3ParquetHook(conn_id)
 
     df = pd.read_parquet(ti.xcom_pull(key="return_value"))
-    meta_df = df[["content_id"]]
+    meta_df = df[["content_id", "company_key"]]
 
-    hook.upload_df(meta_df, path=S3_NEWS_META_PATH, mode="append")
-    hook.upload_split_df(df, path=S3_NEWS_PATH, partition_cols=["date"], mode="append")
+    if not meta_df.empty:
+        hook.upload_df(meta_df, path=S3_NEWS_META_PATH, mode="append")
+
+    if not df.empty:
+        hook.upload_split_df(df, path=S3_NEWS_PATH, partition_cols=["date"], mode="append")
+
+
 
 
 def _teardown(dag_run: DagRun):
@@ -142,12 +143,8 @@ def _teardown(dag_run: DagRun):
 
     logging.info(f"teardown dag run Type: {dag_run.run_type}")
 
-    if dag_run.run_type == "scheduled":
-        logging.info("teardown yfinance news data")
-        shutil.rmtree(YFINANCE_NEWS_DIR_TEMP_PATH)
-
-    else:
-        raise AirflowSkipException("Manual run - skipping teardown")
+    logging.info("teardown yfinance news data")
+    shutil.rmtree(YFINANCE_NEWS_DIR_TEMP_PATH)
 
 
 with DAG(

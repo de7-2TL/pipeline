@@ -1,3 +1,6 @@
+import logging
+from typing import Optional, List
+
 import pandas as pd
 from pandas import DataFrame
 
@@ -44,6 +47,31 @@ class YFinanceNewsCleaner:
 
     def select(self, columns: list[str]) -> DataFrame:
         return self.target[columns]
+
+    def filter_duplicates_by_meta(self,
+        meta_df: Optional[pd.DataFrame],
+        *,
+        keys: List[str]
+    ) -> "YFinanceNewsCleaner":
+        """
+        DataFrame.pipe() 또는 YFinanceNewsCleaner.clear() 내에서 사용하기 위한
+        헬퍼 함수입니다.
+        meta_df가 존재하면, 'keys'를 기준으로 df에서 중복을 제거합니다.
+        """
+        if meta_df is None or meta_df.empty:
+            logging.info("Metadata is empty. Skipping duplicate removal.")
+            return self
+
+        logging.info(f"Removing duplicated news based on keys: {keys}")
+
+        meta_keys = pd.MultiIndex.from_frame(meta_df[keys])
+        df_keys = pd.MultiIndex.from_frame(self.target[keys])
+
+        mask = ~df_keys.isin(meta_keys)
+
+        self.target = self.target[mask]
+
+        return self
 
     def clear(self, fn, *args, **kwargs) -> "YFinanceNewsCleaner":
         """
