@@ -4,7 +4,6 @@ import yfinance as yf
 from airflow import DAG
 from airflow.operators.python import PythonOperator, task
 from airflow.utils.trigger_rule import TriggerRule
-from airflow.exceptions import AirflowException
 
 from pendulum import timezone
 from datetime import datetime
