@@ -8,4 +8,6 @@ pytest-mock
 pytest-docker-tools
 yfinance
 awswrangler
-boto3
+dbt-core==1.8.4
+dbt-snowflake==1.8.4
+astronomer-cosmos==1.11.0
