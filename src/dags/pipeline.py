@@ -3,6 +3,7 @@ from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
 from datetime import datetime, timedelta
+import logging
 
 from plugins.s3 import S3
 from plugins.to_snowflake import SnowflakeLoader
@@ -50,7 +51,13 @@ def load_and_clean_sector(**context):
     s3 = S3(ymd, hm)
     path = f'stock/{ymd}/{hm}/Sector'
 
-    df = s3.read_parquet(path)
+    logging.info(f'Working with path : {path}')
+
+    try:
+        df = s3.read_parquet(path)
+    except FileNotFoundError:
+        logging.info("No data folder exists")
+        return
     cleaned_df = s3.cleaning_stocks(df, 'sector')
     s3.save_to_cleaned(cleaned_df, 'sector')
 
@@ -66,7 +73,13 @@ def load_and_clean_company(**context):
     s3 = S3(ymd, hm)
     path = f'stock/{ymd}/{hm}/Company'
 
-    df = s3.read_parquet(path)
+    logging.info(f'Working with path : {path}')
+
+    try:
+        df = s3.read_parquet(path)
+    except FileNotFoundError:
+        logging.info("No data folder exists")
+        return
     cleaned_df = s3.cleaning_stocks(df, 'company')
     s3.save_to_cleaned(cleaned_df, 'company')
 
