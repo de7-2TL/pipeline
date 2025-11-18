@@ -9,7 +9,7 @@ execution_config = ExecutionConfig(
 
 
 def get_project_config(project_name: str) -> ProjectConfig:
-    return ProjectConfig(f"opt/airflow/dags/dbt/{project_name}")
+    return ProjectConfig(f"/opt/airflow/dags/dbt/{project_name}")
 
 
 def get_profile(project_name: str, conn_id: str = "snowflake_conn"):
