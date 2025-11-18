@@ -3,11 +3,11 @@ import logging
 import pendulum
 from airflow import DAG
 from airflow.exceptions import AirflowSkipException, AirflowException
-from airflow.models import TaskInstance
+from airflow.models import TaskInstance, DagRun
 from airflow.utils.trigger_rule import TriggerRule
 
 from hooks.company_hook import (
-    SnowflakeCompanyHook,
+    get_hook,
 )
 from hooks.s3_hook import S3ParquetHook
 from hooks.yfinance_hook import YfinanceNewsHook
@@ -15,9 +15,29 @@ import pandas as pd
 from airflow.operators.python import PythonOperator, task
 from airflow.operators.empty import EmptyOperator
 
+from utils.file_utils import mkdirs_if_not_exists
+from utils.yfinance_df_cleaner import YFinanceNewsCleaner
 
 YFINANCE_NEWS_DIR_TEMP_PATH = "/opt/airflow/data/temp/yfinance_news"
-S3_NEWS_PATH = "s3://de07-project03/news"
+YFINANCE_NEWS_META_TEMP_PATH = "/opt/airflow/data/temp/yfinance_news/meta"
+S3_NEWS_PATH = "news"
+S3_NEWS_META_PATH = "meta/news"
+
+
+def _get_company_keys() -> list[str]:
+    """
+    회사 티커 목록을 가져옵니다.
+    get_hook: CompanyHook (
+    dev -> 5개의 테스트용 티커 반환 MockHook을 반환합니다.
+    prod: SnowflakeHook을 반환합니다.
+    )
+    :return:
+    :rtype:
+    """
+
+    conn = get_hook("dev", "snowflake_conn")
+
+    return conn.get_company_info()
 
 
 def _extract_yfinance_news(ti: TaskInstance) -> str:
@@ -39,19 +59,10 @@ def _extract_yfinance_news(ti: TaskInstance) -> str:
         raise AirflowSkipException(f"no news found for company: {company_keys}")
 
     news_df = pd.json_normalize(news_json_list)
-    df = _clear_news_df(news_df)
-    output_path = f"{YFINANCE_NEWS_DIR_TEMP_PATH}/{ti.execution_date}.parquet"
-
-    df.to_parquet(output_path)
-    logging.info(f"success saved news to {output_path}")
-
-    return output_path
-
-
-def _clear_news_df(df: pd.DataFrame) -> pd.DataFrame:
-    result = (
-        df.rename(
-            columns={
+    df = (
+        YFinanceNewsCleaner(news_df)
+        .rename_columns(
+            {
                 "content.id": "content_id",
                 "content.title": "title",
                 "content.summary": "summary",
@@ -60,13 +71,8 @@ def _clear_news_df(df: pd.DataFrame) -> pd.DataFrame:
                 "company_key": "company_key",
             }
         )
-        .assign(
-            datetime_tz=lambda x: pd.to_datetime(
-                x["pubDate"], errors="coerce", utc=True
-            ),
-        )
-        .assign(date=lambda x: x["datetime_tz"].dt.strftime("%Y-%m-%d"))
-        .drop(columns=["datetime_tz"])[
+        .set_date("pubDate")
+        .select(
             [
                 "content_id",
                 "title",
@@ -76,17 +82,40 @@ def _clear_news_df(df: pd.DataFrame) -> pd.DataFrame:
                 "pubDate",
                 "date",
             ]
-        ]
+        )
     )
-    return result
+
+    output_path = f"{YFINANCE_NEWS_DIR_TEMP_PATH}/{ti.execution_date.strftime('%Y-%m-%d')}.parquet"
+    mkdirs_if_not_exists(YFINANCE_NEWS_DIR_TEMP_PATH)
+
+    df.to_parquet(output_path)
+    logging.info(f"success saved news to {output_path}")
+
+    return output_path
 
 
-def _get_company_keys() -> list[str]:
-    conn = SnowflakeCompanyHook("snowflake_conn")
-    return conn.get_company_info()
+def _transform_news(s3_conn_id: str, ti: TaskInstance) -> str:
+    """
+    뉴스 데이터프레임을 정제합니다.
+    - 중복된 뉴스 정보를 제거합니다.
+    :param s3_conn_id: S3 연결 ID
+    :return: 정제된 뉴스 Parquet 파일 경로
+    :rtype:
+    """
+    mkdirs_if_not_exists(YFINANCE_NEWS_META_TEMP_PATH)
+    df = pd.read_parquet(YFINANCE_NEWS_DIR_TEMP_PATH)
+    hook = S3ParquetHook(conn_id=s3_conn_id or "aws_conn")
+    meta_df = hook.get_files(S3_NEWS_META_PATH)
+    output_path = f"{YFINANCE_NEWS_META_TEMP_PATH}/{ti.execution_date.strftime('%Y-%m-%d')}.parquet"
+
+    cleaner = YFinanceNewsCleaner(df)
+    cleaner.filter_duplicates_by_meta(meta_df, keys=["content_id", "company_key"])
+
+    cleaner.target.to_parquet(output_path)
+    return output_path
 
 
-def _load_temp_to_s3(conn_id: str) -> str:
+def _load_temp_to_s3(conn_id: str, ti: TaskInstance) -> str:
     """
     추출된 yfinance 뉴스를 통합하여 저장합니다.
     :param kwargs:
@@ -96,22 +125,31 @@ def _load_temp_to_s3(conn_id: str) -> str:
     """
 
     hook = S3ParquetHook(conn_id)
-    df = pd.read_parquet(YFINANCE_NEWS_DIR_TEMP_PATH)
 
-    hook.upload_split_df(df, s3_path=S3_NEWS_PATH, partition_cols=["date"])
+    df = pd.read_parquet(ti.xcom_pull(key="return_value"))
+    meta_df = df[["content_id", "company_key"]]
+
+    if not meta_df.empty:
+        hook.upload_df(meta_df, path=S3_NEWS_META_PATH, mode="append")
+
+    if not df.empty:
+        hook.upload_split_df(df, path=S3_NEWS_PATH, partition_cols=["date"], mode="append")
 
 
-def _teardown():
+
+
+def _teardown(dag_run: DagRun):
     import shutil
 
-    shutil.rmtree(YFINANCE_NEWS_DIR_TEMP_PATH)
+    logging.info(f"teardown dag run Type: {dag_run.run_type}")
 
     logging.info("teardown yfinance news data")
+    shutil.rmtree(YFINANCE_NEWS_DIR_TEMP_PATH)
 
 
 with DAG(
     dag_id="yfinance_news_dag",
-    schedule_interval="*/15 * * * *",
+    schedule_interval="@daily",
     start_date=pendulum.datetime(2025, 11, 1, tz="UTC"),
     catchup=False,
 ) as dag:
@@ -125,6 +163,12 @@ with DAG(
     extract_yfinance_news = PythonOperator(
         task_id="extract_yfinance_news",
         python_callable=_extract_yfinance_news,
+    )
+
+    transform_news = PythonOperator(
+        task_id="transform_news",
+        python_callable=_transform_news,
+        op_kwargs={"s3_conn_id": "aws_conn"},
     )
 
     load_temp_to_s3 = PythonOperator(
@@ -151,6 +195,7 @@ with DAG(
         start_task
         >> get_company_keys
         >> extract_yfinance_news
+        >> transform_news
         >> load_temp_to_s3
         >> teardown
     )
