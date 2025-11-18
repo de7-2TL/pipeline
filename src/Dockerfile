@@ -1,10 +1,12 @@
 FROM apache/airflow:2.9.1-python3.11
 
 COPY requirements.txt .
+
+RUN pip install --no-cache-dir --force-reinstall "click==8.0.4"
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY lib /opt/airflow/lib
 
-
-RUN pip install --no-cache-dir -r requirements.txt
 USER root
 RUN chown -R airflow /opt/airflow/lib
 USER airflow
