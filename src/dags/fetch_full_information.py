@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import yfinance as yf
 from airflow import DAG
@@ -10,6 +11,8 @@ from datetime import datetime
 
 from operators.snowflake_full_refresh_operator import SnowflakeFullRefreshOperator
 
+TMP_DIR = "/tmp/full_information_dag"
+os.makedirs(TMP_DIR, exist_ok=True)
 
 SECTOR_LIST = [
     "basic-materials", "communication-services", "consumer-cyclical",
@@ -29,6 +32,7 @@ def fetch_sector_df(**context) -> pd.DataFrame:
     Returns:
         pd.DataFrame: sector 정보가 담긴 DataFrame
     '''
+    ti = context["ti"]
     sector_data = []
     for sector in SECTOR_LIST:
         sec = yf.Sector(sector)
@@ -41,8 +45,13 @@ def fetch_sector_df(**context) -> pd.DataFrame:
     df = pd.DataFrame(sector_data).drop_duplicates(subset=["sector_key"]).reset_index(drop=True)
     df.columns = df.columns.str.upper()
 
+    # Save to temp parquet
+    filepath = f"{TMP_DIR}/sector.parquet"
+    df.to_parquet(filepath, index=False)
+
     # XCom push
-    context["ti"].xcom_push(key="sector_df", value=df)
+    ti.xcom_push(key="sector_parquet_path", value=filepath)
+    ti.xcom_push(key="sector_list", value=list(df["SECTOR_KEY"]))
 
     print(f"[Sector] {len(df)} rows loaded.")
     return df
@@ -58,13 +67,13 @@ def fetch_industry_df(**context) -> pd.DataFrame:
     '''
 
     ti = context["ti"]
-    sector_df = ti.xcom_pull(key="sector_df", task_ids="fetch_sector")
+    sector_list = ti.xcom_pull(key="sector_list", task_ids="fetch_sector")
 
     industry_data = []
     processed = set()
 
-    for _, row in sector_df.iterrows():
-        sec = yf.Sector(row["SECTOR_KEY"])
+    for sector_key in sector_list:
+        sec = yf.Sector(sector_key)
         industries = sec.industries
         industries.reset_index(inplace=True)
 
@@ -78,14 +87,19 @@ def fetch_industry_df(**context) -> pd.DataFrame:
                 "industry_name": ind["name"],
                 "industry_symbol": ind["symbol"],
                 "market_weight": ind["market weight"],
-                "sector_key": row["SECTOR_KEY"],
+                "sector_key": sector_key,
             })
             processed.add(key)
 
     df = pd.DataFrame(industry_data).drop_duplicates(subset=["industry_key"]).reset_index(drop=True)
     df.columns = df.columns.str.upper()
 
-    ti.xcom_push(key="industry_df", value=df)
+    # Save to temp parquet
+    filepath = f"{TMP_DIR}/industry.parquet"
+    df.to_parquet(filepath, index=False)
+
+    ti.xcom_push(key="industry_parquet_path", value=filepath)
+    ti.xcom_push(key="industry_list", value=list(df["INDUSTRY_KEY"]))
     print(f"[Industry] {len(df)} rows loaded.")
     return df
 
@@ -100,13 +114,13 @@ def fetch_company_df(**context) -> pd.DataFrame:
 
     '''
     ti = context["ti"]
-    industry_df = ti.xcom_pull(key="industry_df", task_ids="fetch_industry")
+    industry_list = ti.xcom_pull(key="industry_list", task_ids="fetch_industry")
 
     company_data = []
     skipped = set()
 
-    for _, ind in industry_df.iterrows():
-        key = ind["INDUSTRY_KEY"]
+    for industry_key in industry_list:
+        key = industry_key
 
         try:
             ind_api = yf.Industry(key)
@@ -132,11 +146,37 @@ def fetch_company_df(**context) -> pd.DataFrame:
     df = pd.DataFrame(company_data).drop_duplicates(subset=["company_symbol"]).reset_index(drop=True)
     df.columns = df.columns.str.upper()
 
-    ti.xcom_push(key="company_df", value=df)
+    # Save to temp parquet
+    filepath = f"{TMP_DIR}/company.parquet"
+    df.to_parquet(filepath, index=False)
+
+    ti.xcom_push(key="company_parquet_path", value=filepath)
     print(f"[Company] {len(df)} rows loaded. Skipped industries: {len(skipped)}")
     return df
 
 
+# Cleanup Task
+@task(trigger_rule=TriggerRule.ALL_DONE)
+def clean_parquet_files(**context):
+    ti = context["ti"]
+    sector_parquet_path = ti.xcom_pull(key="sector_parquet_path", task_ids="fetch_sector")
+    industry_parquet_path = ti.xcom_pull(key="industry_parquet_path", task_ids="fetch_industry")
+    company_parquet_path = ti.xcom_pull(key="company_parquet_path", task_ids="fetch_company")
+
+    files = [
+        sector_parquet_path,
+        industry_parquet_path,
+        company_parquet_path
+    ]
+    for file in files:
+        if os.path.exists(file):
+            print(f"Removing temp file: {file}")
+            os.remove(file)
+            print(f"Removed temp file: {file}")
+            
+    if os.path.exists(TMP_DIR):
+        os.rmdir(TMP_DIR)
+        print(f"Removed temp directory: {TMP_DIR}")
 
 #########################
 # DAG
@@ -173,25 +213,25 @@ with DAG(
     load_sector = SnowflakeFullRefreshOperator(
         task_id="load_sector",
         source_task_id="fetch_sector",
-        xcom_key="sector_df",
+        xcom_key="sector_parquet_path",
         table_name="SECTOR_INFO"
     )
 
     load_industry = SnowflakeFullRefreshOperator(
         task_id="load_industry",
         source_task_id="fetch_industry",
-        xcom_key="industry_df",
+        xcom_key="industry_parquet_path",
         table_name="INDUSTRY_INFO"
     )
 
     load_company = SnowflakeFullRefreshOperator(
         task_id="load_company",
         source_task_id="fetch_company",
-        xcom_key="company_df",
+        xcom_key="company_parquet_path",
         table_name="COMPANY_INFO"
     )
 
     ##
     fetch_sector >> fetch_industry >> fetch_company >> [
         load_sector, load_industry, load_company
-    ]
+    ] >> clean_parquet_files()

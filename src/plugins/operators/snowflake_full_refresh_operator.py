@@ -1,3 +1,4 @@
+import pandas as pd 
 from airflow.models import BaseOperator
 from snowflake.connector.pandas_tools import write_pandas
 from hooks.snowflake_dev_raw_data_hook import SnowflakeDevRawDataHook
@@ -13,9 +14,14 @@ class SnowflakeFullRefreshOperator(BaseOperator):
     def execute(self, context):
         ti = context['ti']
 
-        df = ti.xcom_pull(task_ids=self.source_task_id, key=self.xcom_key)
-        if df is None:
-            raise ValueError("No data found in XCom for the given task and key.")
+        filepath = ti.xcom_pull(
+            task_ids=self.source_task_id, 
+            key=self.xcom_key
+        )
+        if not filepath:
+            raise ValueError(f"ERROR : No file path found in XCom for {self.source_task_id}:{self.xcom_key}")
+
+        df = pd.read_parquet(filepath)
 
         # full refresh 로직 동일
         hook = SnowflakeDevRawDataHook()
