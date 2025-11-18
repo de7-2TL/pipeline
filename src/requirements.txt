@@ -1,5 +1,7 @@
 pytest
 ruff
+yfinance
+dbt-snowflake
 pytest-mock
 pytest-docker-tools
 yfinance
