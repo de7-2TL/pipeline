@@ -1,5 +1,4 @@
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.models import Variable
 from airflow.hooks.base import BaseHook
 from datetime import datetime
 

@@ -3,7 +3,6 @@ from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
 from datetime import datetime, timedelta
-import pendulum
 
 from plugins.s3 import S3
 from plugins.to_snowflake import SnowflakeLoader
