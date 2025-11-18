@@ -137,13 +137,6 @@ def fetch_company_df(**context) -> pd.DataFrame:
     return df
 
 
-# watcher task
-@task(trigger_rule=TriggerRule.ONE_FAILED, retries=0)
-def watcher():
-    raise AirflowException(
-        "Failing task because one or more upstream tasks failed."
-    )
-
 
 #########################
 # DAG
@@ -201,4 +194,4 @@ with DAG(
     ##
     fetch_sector >> fetch_industry >> fetch_company >> [
         load_sector, load_industry, load_company
-    ] >> watcher()
+    ]
