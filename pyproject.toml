@@ -24,6 +24,7 @@ dependencies = [
     "awswrangler>=3.10.1",
     "boto3>=1.40.70",
     "apache-airflow-providers-snowflake>=6.2.2",
+    "dotenv>=0.9.9",
 ]
 
 [dependency-groups]

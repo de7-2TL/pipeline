@@ -1,20 +1,19 @@
 import logging
 
+import pandas as pd
 import pendulum
 from airflow import DAG
-from airflow.exceptions import AirflowSkipException, AirflowException
-from airflow.models import TaskInstance, DagRun
+from airflow.exceptions import AirflowException, AirflowSkipException
+from airflow.models import DagRun, TaskInstance
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import PythonOperator, task
+from airflow.utils.task_group import TaskGroup
 from airflow.utils.trigger_rule import TriggerRule
-
 from hooks.company_hook import (
     get_hook,
 )
 from hooks.s3_hook import S3ParquetHook
 from hooks.yfinance_hook import YfinanceNewsHook
-import pandas as pd
-from airflow.operators.python import PythonOperator, task
-from airflow.operators.empty import EmptyOperator
-
 from utils.file_utils import mkdirs_if_not_exists
 from utils.yfinance_df_cleaner import YFinanceNewsCleaner
 
@@ -35,7 +34,7 @@ def _get_company_keys() -> list[str]:
     :rtype:
     """
 
-    conn = get_hook("dev", "snowflake_conn")
+    conn = get_hook("prod", "snowflake_conn")
 
     return conn.get_company_info()
 
@@ -159,24 +158,30 @@ with DAG(
         task_id="get_company_keys",
         python_callable=_get_company_keys,
     )
+    
+    
+    with TaskGroup("YFinance_News_ETL_Group") as yfinance_news_etl_group:
+        
 
-    extract_yfinance_news = PythonOperator(
+        extract_yfinance_news = PythonOperator(
         task_id="extract_yfinance_news",
         python_callable=_extract_yfinance_news,
-    )
+        )
 
-    transform_news = PythonOperator(
+        transform_news = PythonOperator(
         task_id="transform_news",
         python_callable=_transform_news,
         op_kwargs={"s3_conn_id": "aws_conn"},
-    )
+        )
 
-    load_temp_to_s3 = PythonOperator(
+        load_temp_to_s3 = PythonOperator(
         task_id="load_temp_to_s3",
         python_callable=_load_temp_to_s3,
         op_kwargs={"conn_id": "aws_conn"},
         trigger_rule=TriggerRule.NONE_FAILED,
-    )
+        )
+        
+        extract_yfinance_news >> transform_news >> load_temp_to_s3
 
     teardown = PythonOperator(
         task_id="teardown",
@@ -194,9 +199,7 @@ with DAG(
     (
         start_task
         >> get_company_keys
-        >> extract_yfinance_news
-        >> transform_news
-        >> load_temp_to_s3
+        >> yfinance_news_etl_group
         >> teardown
     )
     list(dag.tasks) >> watcher()
