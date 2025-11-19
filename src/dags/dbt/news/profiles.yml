@@ -3,9 +3,9 @@ news:
   outputs:
     dev:
       type: snowflake
-      account: VBYPGBB-YK05400
-      user: PARKJEHYUN0131
-      password: Snowflakepswd0131
+      account: host
+      user: useraccount
+      password: userpassword
       role: ACCOUNTADMIN
       warehouse: "RAW_DATA"      
       database: DEV
