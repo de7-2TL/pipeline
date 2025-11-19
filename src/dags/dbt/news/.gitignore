@@ -1,4 +1,6 @@
-
+profiles.yaml
 target/
 dbt_packages/
 logs/
+dbt_internal_packages/
+profiles/yml

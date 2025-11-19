@@ -1,0 +1,14 @@
+news:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: VBYPGBB-YK05400
+      user: PARKJEHYUN0131
+      password: Snowflakepswd0131
+      role: ACCOUNTADMIN
+      warehouse: "RAW_DATA"      
+      database: DEV
+      schema: '#'
+      threads: 4
+      client_session_keep_alive: false

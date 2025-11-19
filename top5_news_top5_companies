@@ -1,0 +1,32 @@
+WITH target AS (
+    SELECT 
+        DATETIME, 
+        sector_key, 
+        high_change_rate
+    FROM STAGING_DATA.MAX_SECTOR_HIGH
+    ORDER BY 1 DESC, 3 DESC
+    LIMIT 1
+),
+news_dedup AS (
+    SELECT
+        title,
+        summary,
+        company_key,
+        sector_key,
+        pubDate,
+        COMPANY_NAME,
+        ROW_NUMBER() OVER (
+            PARTITION BY company_key
+            ORDER BY pubDate DESC
+        ) AS rn
+    FROM STAGING_DATA.NEWS_WITH_SYMBOLS
+)
+SELECT
+	b.pubDate,
+	b.title,
+	b.summary,
+	b.company_name
+FROM target a
+JOIN news_dedup b
+    ON a.sector_key = b.sector_key
+WHERE b.rn <= 5
