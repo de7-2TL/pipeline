@@ -22,12 +22,25 @@ def get_profile(project_name: str, conn_id: str = "snowflake_conn"):
     )
 
 
-dbt_demo_dag = DbtDag(
+dbt_news_dag = DbtDag(
     project_config=get_project_config("news"),
     profile_config=get_profile("news", "snowflake_conn"),
     execution_config=execution_config,
     schedule_interval="@daily",
-    start_date=datetime(2023, 1, 1),
+    start_date=datetime(2025, 11, 1),
     catchup=False,
-    dag_id="news_dbt_demo_dag",
+    dag_id="dbt_news_dag",
+    tags=["news", "dbt"],
 )
+
+dbt_stock_sector_dag = DbtDag(
+    project_config=get_project_config("stock_sector"),
+    profile_config=get_profile("stock_sector", "snowflake_conn"),
+    execution_config=execution_config,
+    schedule_interval="@daily",
+    start_date=datetime(2025, 11, 1),
+    catchup=False,
+    dag_id="dbt_stock_sector_dag",
+    tags=["stock", "dbt", "sector"],
+)
+
