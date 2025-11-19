@@ -22,7 +22,7 @@ models:
         data_tests:
           - not_null
 
-  - name: stg_stock_top_sector  
+  - name: stg_stock_top_sector
     description: "Calculate the percentage difference between current high stock and the previous high stock price for each sectors"
     columns:
       - name: datetime
@@ -53,7 +53,7 @@ models:
         description: "The Top sector"
         tests:
           - not_null
-  
+
   - name: company_info
   - name: sector_info
   - name: industry_info
