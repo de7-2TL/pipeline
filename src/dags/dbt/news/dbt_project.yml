@@ -6,7 +6,7 @@ name: 'news'
 version: '1.0.0'
 
 # This setting configures which "profile" dbt uses for this project.
-profile: 'news'
+profile: 'de7-2TL'
 
 # These configurations specify where dbt should look for different types of files.
 # The `model-paths` config, for example, states that models in this project can be
@@ -33,8 +33,8 @@ models:
   news:
     staging:
       +materialized: ephemeral
-      +schema: staging_data
-    # Config indicated by + and applies to all files under models/example/
-    analytics:
+    dim:
       +materialized: table
+    analytics:
       +schema: analytics_data
+      +materialized: table

@@ -1,5 +1,5 @@
 {{ config(
-    schema= generate_schema_name('staging_data', this)
+    SCHEMA="staging_data"
 ) }}
 
 WITH high_with_prev AS (

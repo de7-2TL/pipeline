@@ -1,7 +1,3 @@
-{{ config(
-    schema= generate_schema_name('analytics_data', this)
-) }}
-
 with sector_inudstry_combined as (
 	select
 		a.sector,

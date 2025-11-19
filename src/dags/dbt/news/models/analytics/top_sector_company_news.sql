@@ -1,7 +1,3 @@
-{{ config(
-    schema= generate_schema_name('analytics_data', this)
-) }}
-
 WITH news_dedup AS (
     SELECT
         title,
@@ -12,7 +8,7 @@ WITH news_dedup AS (
             PARTITION BY company_key
             ORDER BY pubdate DESC 
         ) AS rn
-    FROM {{ ref("stg_news_external_table") }}
+    FROM {{ ref("news") }}
 )
 SELECT 	
     b.pubDate,
