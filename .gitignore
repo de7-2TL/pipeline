@@ -12,3 +12,4 @@ src/dags/dbt/logs/
 # Virtual environments
 .venv
 .idea/
+profiles.yaml
