@@ -1,7 +1,3 @@
-{{ config(
-    schema= generate_schema_name('analytics_data', this)
-) }}
-
 WITH news_sector AS (
     SELECT 
         a.pubdate,
@@ -10,7 +6,7 @@ WITH news_sector AS (
         a.company_key,
         b.company_name,
         b.sector
-    FROM {{ ref("stg_news_external_table") }} AS a
+    FROM {{ ref("news") }} AS a
     JOIN {{ ref("stg_company_sector_con") }} AS b
     ON a.company_key = b.company_symbol
 ),

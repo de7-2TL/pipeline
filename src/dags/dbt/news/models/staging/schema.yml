@@ -10,18 +10,6 @@ models:
           - unique
           - not_null
 
-  - name: stg_news_external_table
-    description: "External news data table (from S3 /news/)"
-    columns:
-      - name: content_id
-        description: "The primary key for this table"
-        data_tests:
-          - not_null
-      - name: company_key
-        description: "company foreign key"
-        data_tests:
-          - not_null
-
   - name: stg_stock_top_sector
     description: "Calculate the percentage difference between current high stock and the previous high stock price for each sectors"
     columns:

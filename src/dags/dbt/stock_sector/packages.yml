@@ -1,0 +1,2 @@
+packages:
+  - local: /opt/airflow/dags/dbt/common
