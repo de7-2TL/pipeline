@@ -21,6 +21,40 @@ models:
         description: "company foreign key"
         data_tests:
           - not_null
+
+  - name: stg_stock_top_sector  
+    description: "Calculate the percentage difference between current high stock and the previous high stock price for each sectors"
+    columns:
+      - name: datetime
+        description: "The datetime when the stock data was recorded"
+      - name: sector
+        description: "The sector associated with the stock"
+      - name: high
+        description: "The highest stock price recorded for the sector on the given datetime"
+      - name: prev_high
+        description: "The previous highest stock price for the sector"
+      - name: diff_percent
+        description: "The percentage difference between the current high price and the previous high price"
+        tests:
+          - not_null
+
+  - name: stg_company_sectro_con
+    description: "Connection of top sector and its companies list"
+    columns:
+      - name: company_symbol
+        description: "The symbol of companies in sector will be used for join with news"
+        tests:
+          - not_null
+      - name: company_name
+        description: "The companies' name"
+        tests:
+          - not_null
+      - name: sector
+        description: "The Top sector"
+        tests:
+          - not_null
+  
   - name: company_info
   - name: sector_info
   - name: industry_info
+  - name: stock_sector.sql
