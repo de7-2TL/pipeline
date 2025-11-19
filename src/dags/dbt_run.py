@@ -28,7 +28,7 @@ dbt_demo_dag = DbtDag(
     schedule_interval="@daily",  # 매일 실행
     start_date=datetime(2023, 1, 1),
     catchup=False,
-    dag_id="news_dbt_demo_dag",
+    dag_id="news_dbt",
 )
 
 # 모델 실행 순서 정의

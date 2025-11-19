@@ -120,7 +120,7 @@ def copy_company_snowflake(**context):
 
 with DAG(
     dag_id='Project_Pipeline',
-    start_date=datetime(2025, 11, 17, 17, 30),
+    start_date=datetime(2025, 11, 18, 15, 45),
     schedule_interval = '*/15 * * * *',
     catchup=False,
     max_active_runs=1,
