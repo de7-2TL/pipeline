@@ -1,14 +1,12 @@
+import logging
+from datetime import UTC, datetime, timedelta
+from io import BytesIO
+
+import yfinance as yf
 from airflow import DAG
+from airflow.exceptions import AirflowException
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-from airflow.exceptions import AirflowException
-
-from datetime import datetime, UTC
-from datetime import timedelta
-
-from io import BytesIO
-import yfinance as yf
-import logging
 
 log = logging.getLogger(__name__)
 
