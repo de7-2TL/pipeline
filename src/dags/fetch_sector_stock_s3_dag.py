@@ -143,11 +143,11 @@ def _fetch_and_upload_sector_data_from_df_api(s3_bucket, s3_base_prefix, sector_
 
 
 with DAG(
-    dag_id='sector_api_df_to_s3_parquet_dag', 
-    start_date=datetime(2025, 11, 17),
+    dag_id='fetch_sector_stock_s3_dag', 
+    start_date=datetime(2025, 11, 1),
     schedule_interval='4,19,34,49 * * * *',
     catchup=False,
-    tags=['s3', 'api', 'dynamic-mapping', 'parquet', 'dataframe'],
+    tags=['s3', 'sector', 'stock'],
     default_args={
         'owner': 'airflow',
         'depends_on_past': False,
