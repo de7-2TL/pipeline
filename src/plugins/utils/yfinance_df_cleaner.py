@@ -48,10 +48,8 @@ class YFinanceNewsCleaner:
     def select(self, columns: list[str]) -> DataFrame:
         return self.target[columns]
 
-    def filter_duplicates_by_meta(self,
-        meta_df: Optional[pd.DataFrame],
-        *,
-        keys: List[str]
+    def filter_duplicates_by_meta(
+        self, meta_df: Optional[pd.DataFrame], *, keys: List[str]
     ) -> "YFinanceNewsCleaner":
         """
         DataFrame.pipe() 또는 YFinanceNewsCleaner.clear() 내에서 사용하기 위한

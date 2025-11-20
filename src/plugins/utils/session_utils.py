@@ -1,4 +1,4 @@
-from curl_cffi import requests, Session
+from curl_cffi import Session, requests
 
 
 def get_session() -> Session:
@@ -9,4 +9,3 @@ def get_session() -> Session:
     """
 
     return requests.Session(impersonate="chrome")
-

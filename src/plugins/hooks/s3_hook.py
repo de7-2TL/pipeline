@@ -1,9 +1,9 @@
 import logging
 from typing import Literal, Optional
 
+import awswrangler as wr
 import boto3
 from airflow.hooks.base import BaseHook
-import awswrangler as wr
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
 
@@ -100,7 +100,7 @@ class S3ParquetHook(BaseHook):
             partition_cols=partition_cols,
             index=False,
             mode=mode,
-        )
+        )   
 
     def _get_s3_full_path(self, path):
         return self.BASE_PATH + path

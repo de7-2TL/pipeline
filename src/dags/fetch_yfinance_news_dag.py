@@ -132,9 +132,9 @@ def _load_temp_to_s3(conn_id: str, ti: TaskInstance) -> str:
         hook.upload_df(meta_df, path=S3_NEWS_META_PATH, mode="append")
 
     if not df.empty:
-        hook.upload_split_df(df, path=S3_NEWS_PATH, partition_cols=["date"], mode="append")
-
-
+        hook.upload_split_df(
+            df, path=S3_NEWS_PATH, partition_cols=["date"], mode="append"
+        )
 
 
 def _teardown(dag_run: DagRun):
@@ -150,7 +150,7 @@ with DAG(
     dag_id="fetch_yfinance_news",
     schedule_interval="@hourly",
     start_date=pendulum.datetime(2025, 11, 1),
-    tags=['s3', 'news', 'company'],
+    tags=["s3", "news", "company"],
     catchup=False,
 ) as dag:
     start_task = EmptyOperator(task_id="start_task")
@@ -159,29 +159,26 @@ with DAG(
         task_id="get_company_keys",
         python_callable=_get_company_keys,
     )
-    
-    
-    with TaskGroup("YFinance_News_ETL_Group") as yfinance_news_etl_group:
-        
 
+    with TaskGroup("YFinance_News_ETL_Group") as yfinance_news_etl_group:
         extract_yfinance_news = PythonOperator(
-        task_id="extract_yfinance_news",
-        python_callable=_extract_yfinance_news,
+            task_id="extract_yfinance_news",
+            python_callable=_extract_yfinance_news,
         )
 
         transform_news = PythonOperator(
-        task_id="transform_news",
-        python_callable=_transform_news,
-        op_kwargs={"s3_conn_id": "aws_conn"},
+            task_id="transform_news",
+            python_callable=_transform_news,
+            op_kwargs={"s3_conn_id": "aws_conn"},
         )
 
         load_temp_to_s3 = PythonOperator(
-        task_id="load_temp_to_s3",
-        python_callable=_load_temp_to_s3,
-        op_kwargs={"conn_id": "aws_conn"},
-        trigger_rule=TriggerRule.NONE_FAILED,
+            task_id="load_temp_to_s3",
+            python_callable=_load_temp_to_s3,
+            op_kwargs={"conn_id": "aws_conn"},
+            trigger_rule=TriggerRule.NONE_FAILED,
         )
-        
+
         extract_yfinance_news >> transform_news >> load_temp_to_s3
 
     teardown = PythonOperator(
@@ -197,10 +194,5 @@ with DAG(
             "Failing task because one or more upstream tasks failed."
         )
 
-    (
-        start_task
-        >> get_company_keys
-        >> yfinance_news_etl_group
-        >> teardown
-    )
+    (start_task >> get_company_keys >> yfinance_news_etl_group >> teardown)
     list(dag.tasks) >> watcher()
