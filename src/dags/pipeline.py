@@ -122,7 +122,7 @@ with DAG(
     dag_id='Project_Pipeline',
     start_date=datetime(2025, 11, 18, 15, 45),
     schedule_interval = '*/15 * * * *',
-    catchup=False,
+    catchup=True,
     max_active_runs=1,
     default_args={
         'retries': 1,
