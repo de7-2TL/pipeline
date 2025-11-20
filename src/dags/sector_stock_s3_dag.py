@@ -2,17 +2,13 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.exceptions import AirflowException
-from airflow.models import Variable
-from botocore.exceptions import ClientError
 
 from datetime import datetime, UTC
 from datetime import timedelta
 
 from io import BytesIO
 import yfinance as yf
-import pandas as pd
 import logging
-import pytz
 
 log = logging.getLogger(__name__)
 

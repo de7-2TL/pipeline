@@ -1,8 +1,6 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-from airflow.models import Variable
-from botocore.exceptions import ClientError
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.exceptions import AirflowException
 
@@ -13,7 +11,6 @@ from airflow.operators.python import get_current_context
 
 from io import BytesIO
 import yfinance as yf
-import pandas as pd
 import logging
 import pytz
 
