@@ -7,7 +7,9 @@ wheels/
 *.egg-info
 src/logs/
 src/data/
+src/dags/dbt/logs/
 
 # Virtual environments
 .venv
 .idea/
+profiles.yaml

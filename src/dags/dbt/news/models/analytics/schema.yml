@@ -1,0 +1,115 @@
+version: 2
+
+models:
+  - name: top_sector
+    description: "This model gets the top sector and shows industries with its weight"
+    columns:
+      - name: sector
+        description: "Top sector aggregated from top stock top sector"
+        tests:
+          - not_null
+      - name: industry_key
+        description: "Industry key of sector"
+        tests:
+          - not_null
+          - unique
+      - name: industry_name
+        description: "Industry Name of sector"
+        tests:
+          - not_null
+          - unique
+      - name: market_weight
+        description: "Distribution of industry in the specific sector"
+        tests:
+          - not_null
+
+
+  - name: top_sector_company_news
+    description: "This model retrieves the latest news for each company in the top sectors. It joins the company details with the top sector information and filters out the latest 5 news articles for each company."
+    columns:
+      - name: pubDate
+        description: "The publication date of the news article."
+        tests:
+          - not_null
+      - name: company_name
+        description: "The name of the company."
+        tests:
+          - not_null
+      - name: sector
+        description: "The sector associated with the company."
+        tests:
+          - not_null
+      - name: industry_key
+              description: "The companies' industry"
+              tests:
+                - not_null
+      - name: title
+        description: "The title of the news article."
+        tests:
+          - not_null
+      - name: summary
+        description: "A brief summary of the news article."
+        tests:
+          - not_null
+
+  - name: top_sector_news
+    description: "This model retrieves the latest news from top sector"
+    columns:
+      - name: pubdate
+        description: "The published date of news"
+        tests:
+          - not_null
+      - name: title
+        description: "Title of News article"
+        tests:
+          - not_null
+      - name: summary
+        description: "The brief summary of news article"
+        tests:
+          - not_null
+      - name: company_name
+        description: "The Company name related to news article"
+        tests:
+          - not_null
+      - name: sector
+        description: "The top sector"
+        tests:
+          - not_null
+
+  - name: stock_with_industry
+    description: "Company Stock has matched with company name and its industry"
+    columns:  
+      - name: DATETIME
+        description: "Datetime of Stock"
+
+
+      - name: open
+        description: "Open Price of stock"
+
+
+      - name: high
+        description: "Highest Price of stock"
+
+
+      - name: low
+        description: "Lowest Price of stock"
+
+
+      - name: close
+        description: "Close Price of stock"
+
+
+      - name: volume
+        description: "Volume: amount of exchange within its stock"
+
+
+      - name: company_name
+        description: "Company Name of its stock info"
+
+
+      - name: industry_name
+        description: "Industry name of company"
+
+      - name: sector
+        description: "Sector of Industry"
+

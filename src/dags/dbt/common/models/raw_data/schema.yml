@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: company_info
+    description: "회사 정보 테이블"
+    columns:
+      - name: company_symbol
+        description: "The primary key for this table"
+        data_tests:
+          - unique
+          - not_null
+
+  - name: industry_info
+    description: "산업 정보 테이블"
+    columns:
+      - name: industry_key
+        description: "The primary key for this table"
+        data_tests:
+          - unique
+          - not_null
+
+  - name: sector_info
+    description: "섹터 정보 테이블"
+    columns:
+      - name: sector_key
+        description: "The primary key for this table"
+        data_tests:
+          - unique
+          - not_null
+
+  - name: news
+    description: "뉴스 데이터 테이블 (external news data from S3 /news/)"
+    columns:
+      - name: content_id
+        description: "The primary key for this table"
+        data_tests:
+          - not_null
+      - name: company_key
+        description: "company foreign key"
+        data_tests:
+          - not_null
+
+  - name: stock_company
+    description: "회사 주식 데이터 테이블"
+
+  - name: stock_sector
+    description: "섹터 주식 데이터 테이블"

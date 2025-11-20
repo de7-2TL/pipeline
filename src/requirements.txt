@@ -1,2 +1,9 @@
 pytest
 ruff
+pytest-mock
+pytest-docker-tools
+yfinance
+awswrangler
+dbt-core==1.8.4
+dbt-snowflake==1.8.4
+astronomer-cosmos==1.11.0

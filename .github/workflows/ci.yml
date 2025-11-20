@@ -2,7 +2,7 @@ name: Airflow DAG CI
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "main" ]
     paths:
       - src/**
       - tests/**
@@ -29,7 +29,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10.12"
+          python-version: "3.11"
 
       - name: Set commit range for diff
         id: commit-range
@@ -89,17 +89,13 @@ jobs:
           pip install -r requirements-base.txt
           pip install -r requirements.txt
 
-      - name: Install dependencies (libs)
-        working-directory: src/lib
-        run: |
-          pip install -r requirements-lib.txt
-
       - name: Set Mock Airflow Env
         run: |
           airflow db init
 
       - name: Run pytest
         run: |
+          export PYTHONPATH=./src/dags:./src/plugins:$PYTHONPATH
           pytest -v --disable-warnings
 
       - name: Linting with ruff
