@@ -14,6 +14,7 @@ SELECT
     b.pubDate,
     a.company_name,
     a.sector,
+    a.industry_key,
     b.title,
     b.summary
 FROM {{ ref("stg_company_sector_con") }} AS a

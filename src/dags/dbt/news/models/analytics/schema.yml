@@ -39,6 +39,10 @@ models:
         description: "The sector associated with the company."
         tests:
           - not_null
+      - name: industry_key
+              description: "The companies' industry"
+              tests:
+                - not_null
       - name: title
         description: "The title of the news article."
         tests:
