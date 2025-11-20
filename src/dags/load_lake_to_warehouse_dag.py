@@ -120,6 +120,7 @@ with DAG(
     dag_id='load_lake_to_warehouse',
     start_date=pendulum.datetime(2025, 11, 1),
     schedule_interval = '*/15 * * * *',
+    tags=['s3', 'snowflake'],
     catchup=False,
     max_active_runs=1,
     default_args={

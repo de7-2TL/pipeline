@@ -182,7 +182,7 @@ def clean_parquet_files(**context):
 with DAG(
     dag_id="fetch_full_information",
     start_date=pendulum.datetime(2025, 11, 1),
-    schedule_interval="0 9 * * 1-5",   # 평일 오전 9시
+    schedule_interval="@daily", 
     catchup=False,
     tags=["information", "sector", "industry", "company", "snowflake"],
 ) as dag:

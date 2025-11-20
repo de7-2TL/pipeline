@@ -150,6 +150,7 @@ with DAG(
     dag_id="fetch_yfinance_news",
     schedule_interval="@hourly",
     start_date=pendulum.datetime(2025, 11, 1),
+    tags=['s3', 'news', 'company'],
     catchup=False,
 ) as dag:
     start_task = EmptyOperator(task_id="start_task")
