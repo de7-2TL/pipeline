@@ -28,6 +28,6 @@ dbt_top_sector_news_dag = DbtDag(
     catchup=False,
     dag_id="dbt_top_sector_news",
     render_config=RenderConfig(
-        select=["+top_sector_company_news", "+top_sector", "+top_sector_news"],
+        select=["+top_sector_company_news", "+top_sector", "+top_sector_news", "+stock_with_industry"],
     ),
 )
