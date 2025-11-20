@@ -167,7 +167,7 @@ def _fetch_and_upload_sector_data_from_df_api(s3_bucket, s3_base_prefix, company
 
 
 with DAG(
-    dag_id='company_api_df_to_s3_parquet_dag', 
+    dag_id='fetch_company_stock_s3',
     start_date=datetime(2025, 11, 17),
     schedule_interval='19,34,49,4 * * * *',
     catchup=False,

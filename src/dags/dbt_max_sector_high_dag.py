@@ -1,6 +1,5 @@
-import os
+from datetime import datetime
 
-import pendulum
 from cosmos import DbtDag, ExecutionConfig, ProfileConfig, ProjectConfig, RenderConfig
 from cosmos.profiles import SnowflakeUserPasswordProfileMapping
 
@@ -9,10 +8,7 @@ execution_config = ExecutionConfig(
 )
 
 
-CURRENT = os.path.dirname(os.path.abspath(__file__))
-DBT_PROJECT = os.path.join(CURRENT, "dbt/stock_sector")
-
-project_config = ProjectConfig(dbt_project_path=DBT_PROJECT, install_dbt_deps=True)
+project_config = ProjectConfig("/opt/airflow/dags/dbt/stock_sector")
 
 
 profile_config = ProfileConfig(
@@ -28,7 +24,7 @@ dbt_max_sector_high_dag = DbtDag(
     project_config=project_config,
     profile_config=profile_config,
     schedule_interval="@daily",
-    start_date=pendulum.datetime(2025, 11, 1),
+    start_date=datetime(2025, 11, 1),
     catchup=False,
     dag_id="dbt_max_sector_high",
     tags=["stock", "dbt", "sector"],
