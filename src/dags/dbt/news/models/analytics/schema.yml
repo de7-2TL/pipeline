@@ -71,3 +71,41 @@ models:
         description: "The top sector"
         tests:
           - not_null
+
+  - name: stock_with_industry
+    description: "Company Stock has matched with company name and its industry"
+    columns:  
+      - name: DATETIME
+        description: "Datetime of Stock"
+
+
+      - name: open
+        description: "Open Price of stock"
+
+
+      - name: high
+        description: "Highest Price of stock"
+
+
+      - name: low
+        description: "Lowest Price of stock"
+
+
+      - name: close
+        description: "Close Price of stock"
+
+
+      - name: volume
+        description: "Volume: amount of exchange within its stock"
+
+
+      - name: company_name
+        description: "Company Name of its stock info"
+
+
+      - name: industry_name
+        description: "Industry name of company"
+
+      - name: sector
+        description: "Sector of Industry"
+
