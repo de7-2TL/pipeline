@@ -1,3 +1,4 @@
+import os
 
 import pendulum
 from cosmos import DbtDag, ExecutionConfig, ProfileConfig, ProjectConfig, RenderConfig
@@ -8,7 +9,10 @@ execution_config = ExecutionConfig(
 )
 
 
-project_config = ProjectConfig("/opt/airflow/dags/dbt/stock_sector")
+CURRENT = os.path.dirname(os.path.abspath(__file__))
+DBT_PROJECT = os.path.join(CURRENT, "dbt/stock_sector")
+
+project_config = ProjectConfig(dbt_project_path=DBT_PROJECT, install_dbt_deps=True)
 
 
 profile_config = ProfileConfig(
