@@ -1,4 +1,4 @@
-from curl_cffi import requests, Session
+from curl_cffi import Session, requests
 
 
 def get_session() -> Session:

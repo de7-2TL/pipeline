@@ -1,10 +1,10 @@
-import pandas as pd 
+import pandas as pd
 from airflow.models import BaseOperator
 from snowflake.connector.pandas_tools import write_pandas
 from hooks.snowflake_dev_raw_data_hook import SnowflakeDevRawDataHook
 
-class SnowflakeFullRefreshOperator(BaseOperator):
 
+class SnowflakeFullRefreshOperator(BaseOperator):
     def __init__(self, source_task_id, xcom_key, table_name, **kwargs):
         super().__init__(**kwargs)
         self.source_task_id = source_task_id
@@ -12,14 +12,13 @@ class SnowflakeFullRefreshOperator(BaseOperator):
         self.table_name = table_name
 
     def execute(self, context):
-        ti = context['ti']
+        ti = context["ti"]
 
-        filepath = ti.xcom_pull(
-            task_ids=self.source_task_id, 
-            key=self.xcom_key
-        )
+        filepath = ti.xcom_pull(task_ids=self.source_task_id, key=self.xcom_key)
         if not filepath:
-            raise ValueError(f"ERROR : No file path found in XCom for {self.source_task_id}:{self.xcom_key}")
+            raise ValueError(
+                f"ERROR : No file path found in XCom for {self.source_task_id}:{self.xcom_key}"
+            )
 
         df = pd.read_parquet(filepath)
 
@@ -36,7 +35,7 @@ class SnowflakeFullRefreshOperator(BaseOperator):
                 f"SELECT * FROM dev.raw_data.{temp}"
             )
             cur.execute(f"DROP TABLE IF EXISTS dev.raw_data.{temp}")
-        
+
         return_msg = f"Refreshed: {self.table_name}"
         self.log.info(return_msg)
         return return_msg

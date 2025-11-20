@@ -1,5 +1,6 @@
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 
+
 class SnowflakeDevRawDataHook(SnowflakeHook):
     """
     Snowflake dev.raw_data 스키마에 연결하는 Hook.
