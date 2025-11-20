@@ -1,10 +1,10 @@
-from datetime import datetime
 
+import pendulum
 from cosmos import DbtDag, ExecutionConfig, ProfileConfig, ProjectConfig, RenderConfig
 from cosmos.profiles import SnowflakeUserPasswordProfileMapping
 
 execution_config = ExecutionConfig(
-    dbt_executable_path="/home/airflow/.local/bin/dbt",
+    dbt_executable_path="dbt",
 )
 
 
@@ -19,14 +19,15 @@ profile_config = ProfileConfig(
     ),
 )
 
-dbt_top_sector_news_dag = DbtDag(
+
+dbt_max_sector_high_dag = DbtDag(
     project_config=project_config,
     profile_config=profile_config,
     execution_config=execution_config,
     schedule_interval="@daily",
-    start_date=datetime(2023, 1, 1),
+    start_date=pendulum.datetime(2025, 11, 1),
     catchup=False,
-    dag_id="dbt_top_sector_news",
+    dag_id="dbt_max_sector_high",
     render_config=RenderConfig(
         select=["+top_sector_company_news", "+top_sector", "+top_sector_news"],
     ),

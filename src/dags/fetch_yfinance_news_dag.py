@@ -147,9 +147,9 @@ def _teardown(dag_run: DagRun):
 
 
 with DAG(
-    dag_id="yfinance_news_dag",
-    schedule_interval="@daily",
-    start_date=pendulum.datetime(2025, 11, 1, tz="UTC"),
+    dag_id="fetch_yfinance_news",
+    schedule_interval="@hourly",
+    start_date=pendulum.datetime(2025, 11, 1),
     catchup=False,
 ) as dag:
     start_task = EmptyOperator(task_id="start_task")
