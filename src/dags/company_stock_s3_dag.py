@@ -3,6 +3,7 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.exceptions import AirflowException
+from hooks.company_hook import get_hook
 
 from datetime import datetime, UTC
 from datetime import timedelta
@@ -17,7 +18,7 @@ import pytz
 log = logging.getLogger(__name__)
 
 S3_BUCKET = "de07-project03"
-S3_PREFIX = "raw_data"
+S3_PREFIX = "stock"
 SNOWFLAKE_CONN = 'snowflake_conn'
 AWS_CONN_ID = "aws_conn"
 TARGET_FOLDER_NAME = 'Company'
@@ -79,13 +80,8 @@ def check_deep_subfolder_existence(bucket_name, base_path, target_folder_name, a
 # .expand_kwargs(company_keys)로 Mapped Tasks를 구성하기 위해 @task 사용.
 @task
 def _get_company_keys_from_snowflake(snowflake_conn_id: str, chunk_size) -> list[str]:
-    query = """
-    SELECT company_symbol
-    FROM dev.raw_data.COMPANY_INFO;
-    """
-    hook = SnowflakeHook(snowflake_conn_id=snowflake_conn_id)
-    df = hook.get_pandas_df(query)
-    data_list = df["COMPANY_SYMBOL"].dropna().tolist()
+    hook = get_hook("prod", conn_id=snowflake_conn_id)
+    data_list = hook.get_company_info()
 
     # chunk_size에 맞춰 data_list를 쪼개어 담음.
     # "company_symbols"라는 동일한 키의 밸류로 담기며, 딕셔너리들의 리스트 구조로 최종 반환.
@@ -164,6 +160,7 @@ def _fetch_and_upload_sector_data_from_df_api(s3_bucket, s3_base_prefix, company
 
             except Exception as e:
                 log.warning(f"[{company_symbol}] Failed to process: {e}")
+                raise
 
     except Exception as e:
         log.error(f"Batch fetch failed: {e}")

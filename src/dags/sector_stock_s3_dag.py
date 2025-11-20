@@ -19,7 +19,7 @@ SECTOR_LIST = ["basic-materials", "communication-services",
 
 
 S3_BUCKET = "de07-project03"
-S3_PREFIX = "raw_data"
+S3_PREFIX = "stock"
 AWS_CONN_ID = "aws_conn"
 TARGET_FOLDER_NAME = 'Sector'
 
