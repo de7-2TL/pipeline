@@ -26,7 +26,7 @@ dbt_top_sector_news_dag = DbtDag(
     schedule_interval="@daily",
     start_date=datetime(2023, 1, 1),
     catchup=False,
-    dag_id="dbt_top_sector_news",
+    dag_id="dbt_top_sector_news_dag",
     render_config=RenderConfig(
         select=["+top_sector_company_news", "+top_sector", "+top_sector_news", "+stock_with_industry"],
     ),
