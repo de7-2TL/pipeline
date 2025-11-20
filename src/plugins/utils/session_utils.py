@@ -9,3 +9,4 @@ def get_session() -> Session:
     """
 
     return requests.Session(impersonate="chrome")
+
