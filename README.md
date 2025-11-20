@@ -5,8 +5,8 @@
 > Airflow 기반의 파이프라인을 개발한 프로젝트입니다.
 
 ### Dashboard
-![dashboard_1.png](docs/images/dashboard_1.png)
-![dashboard_2.png](docs/images/dashboard_2.png)
+![dashboard.png](docs/images/dashboard.png)
+
 
 ## Data Flow
 ![data_flow.png](docs/images/data_flow.png)
