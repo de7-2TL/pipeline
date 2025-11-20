@@ -1,6 +1,7 @@
-from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+
 from airflow.hooks.base import BaseHook
-from datetime import datetime
+from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
+
 
 class SnowflakeLoader:
     """
@@ -116,19 +117,3 @@ class SnowflakeLoader:
             pattern = '.*[.]parquet';
         """
         self.hook.run(create_external_table)
-
-
-
-
-
-if __name__ == "__main__":
-    # Test Class
-    tm = datetime.strptime("2025-11-17 17:30:00", "%Y-%m-%d %H:%M:%S")
-    ymd = tm.strftime("%Y-%m-%d")
-    hm = tm.strftime("%H%M")
-
-    sf = SnowflakeLoader(ymd, hm)
-
-    sf.copy_stock_sector_from_s3()
-    sf.copy_stock_company_from_s3()
-    sf.create_news_external_table()

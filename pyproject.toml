@@ -8,8 +8,6 @@ dependencies = [
     "apache-airflow==2.9.1",
     "apache-airflow-providers-standard>=0.0.1",
     "pandas",
-    "lib-a",
-    "lib-b",
     "pytest-docker-tools>=3.1.9",
     "pytest-mock>=3.15.1",
     "yfinance>=0.2.66",
@@ -36,13 +34,3 @@ dev = [
     "pytest>=9.0.0",
     "pytest-mock>=3.15.1",
 ]
-
-[tool.uv.workspace]
-members = [
-    "src/lib/lib-a",
-    "src/lib/lib-b",
-]
-
-[tool.uv.sources]
-lib-a = { workspace = true }
-lib-b = { workspace = true }

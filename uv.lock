@@ -10,13 +10,6 @@ resolution-markers = [
     "python_full_version < '3.12'",
 ]
 
-[manifest]
-members = [
-    "lib-a",
-    "lib-b",
-    "pipeline",
-]
-
 [[package]]
 name = "aenum"
 version = "3.1.16"
@@ -2678,16 +2671,6 @@ wheels = [
 ]
 
 [[package]]
-name = "lib-a"
-version = "0.1.0"
-source = { editable = "src/lib/lib-a" }
-
-[[package]]
-name = "lib-b"
-version = "0.1.0"
-source = { editable = "src/lib/lib-b" }
-
-[[package]]
 name = "limits"
 version = "5.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3789,8 +3772,6 @@ dependencies = [
     { name = "dbt-core" },
     { name = "dbt-snowflake" },
     { name = "dotenv" },
-    { name = "lib-a" },
-    { name = "lib-b" },
     { name = "notebook" },
     { name = "pandas" },
     { name = "polars" },
@@ -3823,8 +3804,6 @@ requires-dist = [
     { name = "dbt-core", specifier = ">=1.9.4" },
     { name = "dbt-snowflake", specifier = ">=1.9.2" },
     { name = "dotenv", specifier = ">=0.9.9" },
-    { name = "lib-a", editable = "src/lib/lib-a" },
-    { name = "lib-b", editable = "src/lib/lib-b" },
     { name = "notebook", specifier = ">=7.4.7" },
     { name = "pandas" },
     { name = "polars", specifier = ">=1.35.2" },

@@ -1,13 +1,11 @@
 import os
+
 import pandas as pd
+import pendulum
 import yfinance as yf
 from airflow import DAG
 from airflow.operators.python import PythonOperator, task
 from airflow.utils.trigger_rule import TriggerRule
-
-from pendulum import timezone
-from datetime import datetime
-
 from operators.snowflake_full_refresh_operator import SnowflakeFullRefreshOperator
 
 TMP_DIR = "/tmp/full_information_dag"
@@ -182,8 +180,8 @@ def clean_parquet_files(**context):
 #########################
 
 with DAG(
-    dag_id="company_full_refresh_dag",
-    start_date=datetime(2025, 10, 1, tzinfo=timezone("America/New_York")),
+    dag_id="fetch_full_information",
+    start_date=pendulum.datetime(2025, 11, 1),
     schedule_interval="0 9 * * 1-5",   # 평일 오전 9시
     catchup=False,
     tags=["information", "sector", "industry", "company", "snowflake"],

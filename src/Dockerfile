@@ -4,10 +4,3 @@ RUN pip install --upgrade pip
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-COPY lib /opt/airflow/lib
-
-USER root
-RUN chown -R airflow /opt/airflow/lib
-USER airflow
-RUN sh /opt/airflow/lib/install_lib.sh
