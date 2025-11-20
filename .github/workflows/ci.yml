@@ -89,11 +89,6 @@ jobs:
           pip install -r requirements-base.txt
           pip install -r requirements.txt
 
-      - name: Install dependencies (libs)
-        working-directory: src/lib
-        run: |
-          pip install -r requirements-lib.txt
-
       - name: Set Mock Airflow Env
         run: |
           airflow db init

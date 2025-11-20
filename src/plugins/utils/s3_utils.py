@@ -1,14 +1,12 @@
-from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-from airflow.models import Variable
+from io import BytesIO
 
 import pandas as pd
+import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.fs as pa_fs
 import pyarrow.parquet as pq
-import pyarrow as pa
-from io import BytesIO
-
-from datetime import datetime
+from airflow.models import Variable
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
 
 class S3:
@@ -99,18 +97,3 @@ class S3:
             raise KeyError('Wrong object : object should be either sector or company')
 
         return df[cols]
-
-
-
-
-if __name__ == '__main__':
-    time = datetime.strptime("2025-11-17 17:30:00", "%Y-%m-%d %H:%M:%S")
-    ymd = time.strftime("%Y-%m-%d")
-    hm = time.strftime("%H%M")
-
-    s3 = S3(ymd, hm)
-    stock_sector = f'stock/{ymd}/{hm}/Sector'
-    stock_company = f'stock/{ymd}/{hm}/Company'
-
-    s3.save_to_cleaned(s3.cleaning_stocks(s3.read_parquet(stock_sector), 'sector'), 'sector')
-    s3.save_to_cleaned(s3.cleaning_stocks(s3.read_parquet(stock_company), 'company'), 'company')

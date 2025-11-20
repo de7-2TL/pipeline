@@ -1,15 +1,13 @@
+import logging
+from datetime import timedelta
+
+import pendulum
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
-from datetime import datetime, timedelta
-import logging
-
-from plugins.s3 import S3
-from plugins.to_snowflake import SnowflakeLoader
-
-
-
+from utils.s3_utils import S3
+from utils.snowflake_utils import SnowflakeLoader
 
 
 def get_time_context(exec_dt):
@@ -119,8 +117,8 @@ def copy_company_snowflake(**context):
 
 
 with DAG(
-    dag_id='Project_Pipeline',
-    start_date=datetime(2025, 11, 18, 15, 45),
+    dag_id='load_lake_to_warehouse',
+    start_date=pendulum.datetime(2025, 11, 1),
     schedule_interval = '*/15 * * * *',
     catchup=False,
     max_active_runs=1,

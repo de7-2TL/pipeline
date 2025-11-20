@@ -1,8 +1,8 @@
 import inspect
 from typing import Any
 
-from airflow.hooks.base import BaseHook
 import yfinance as yf
+from airflow.hooks.base import BaseHook
 
 
 class YfinanceNewsHook(BaseHook):
@@ -11,7 +11,6 @@ class YfinanceNewsHook(BaseHook):
     """
 
     _companies = None
-    _company_info = None
     session = None
 
     def __init__(self, companies: list[str]) -> None:
