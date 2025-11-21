@@ -38,9 +38,9 @@ models:
         tests:
           - not_null
       - name: industry_key
-              description: "The companies' industry"
-              tests:
-                - not_null
+        description: "The companies' industry"
+        tests:
+          - not_null
       - name: sector
         description: "The Top sector"
         tests:
