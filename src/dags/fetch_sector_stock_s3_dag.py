@@ -195,7 +195,7 @@ def _fetch_and_upload_sector_data_from_df_api(
 
 
 with DAG(
-    dag_id="fetch_sector_stock_s3_dag",
+    dag_id="fetch_sector_stock_s3",
     start_date=datetime(2025, 11, 1),
     schedule_interval="4,19,34,49 * * * *",
     catchup=False,
