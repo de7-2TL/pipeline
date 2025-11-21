@@ -45,8 +45,8 @@ class YFinanceNewsCleaner:
 
         return self
 
-    def select(self, columns: list[str]) -> DataFrame:
-        return self.target[columns]
+    def select(self, columns: list[str] | None = None) -> DataFrame:
+        return self.target[columns] if columns is not None else self.target
 
     def filter_duplicates_by_meta(
         self, meta_df: Optional[pd.DataFrame], *, keys: List[str]

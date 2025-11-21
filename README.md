@@ -1,11 +1,12 @@
-# pipeline
+# 실시간 트렌드 섹터 기반 종목별 뉴스 영향력 분석 대시보드
 
 ## 프로젝트 소개
-
+> 특정 섹터(변동성이 큰, 급등, 급락)에 대해 어떤 뉴스, 어떤 이슈가 있는지 확인할 수 있도록
+> Airflow 기반의 파이프라인을 개발한 프로젝트입니다.
 
 ### Dashboard
-![dashboard_1.png](docs/images/dashboard_1.png)
-![dashboard_2.png](docs/images/dashboard_2.png)
+![dashboard.png](docs/images/dashboard.png)
+
 
 ## Data Flow
 ![data_flow.png](docs/images/data_flow.png)
@@ -135,32 +136,32 @@ uv sync
 
 #### **김민국**
 
-> 담당 업무 Title
+> ETL DAG 작성 및 스케쥴링
 
-- feature1
-- feature2
-- feature3
+- 마스터 데이터 적재를 위한 일간 DAG 작성
+- Airflow 스케쥴링
 
 #### **박제현**
 
-> 담당 업무 Title
+> DBT(ELT) 구축 및 대시보드 제작
 
-- feature1
-- feature2
-- feature3
+- S3 To Snowflake DAG 개발
+- DBT를 활용하여 DW 내부에서 Raw → Stage → Analytics ELT 구현
+- Superset 대시보드 제작
 
 #### **정성길**
 
-> 담당 업무 Title
+> S3 적재 DAG 구현 및 프로젝트 개발 환경 구축
 
-- feature1
-- feature2
-- feature3
+- Airflow 뉴스 정보 저장
+  - Meta 데이터를 활용하여 중복된 뉴스 정보 필터링
+  - 뉴스 게시일 기반 파티셔닝 적용
+- Docker Compose 기반 Airflow, DBT 개발 환경 구축
 
 #### **천준규**
 
-> 담당 업무 Title
+> DAG 개발 및 보고자료 제작
 
-- feature1
-- feature2
-- feature3
+- 섹터별 스톡 데이터 S3 적재 DAG 개발
+- 기업별 스톡 데이터 S3 적재 DAG 개발
+- 보고자료 제작
