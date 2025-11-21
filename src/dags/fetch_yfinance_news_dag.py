@@ -18,9 +18,9 @@ from utils.file_utils import mkdirs_if_not_exists
 from utils.yfinance_df_cleaner import YFinanceNewsCleaner
 
 YFINANCE_NEWS_DIR_TEMP_PATH = "/opt/airflow/data/temp/yfinance_news"
-YFINANCE_NEWS_META_TEMP_PATH = "/opt/airflow/data/temp/yfinance_news/meta"
+YFINANCE_NEWS_CLEANED_TEMP_PATH = "/opt/airflow/data/temp/yfinance_news/cleaned"
 S3_NEWS_PATH = "news"
-S3_NEWS_META_PATH = "meta/news"
+S3_NEWS_META_PATH = "meta/news/"
 
 
 def _get_company_keys() -> list[str]:
@@ -90,7 +90,7 @@ def _extract_yfinance_news(ti: TaskInstance) -> str:
     df.to_parquet(output_path)
     logging.info(f"success saved news to {output_path}")
 
-    return output_path
+    ti.xcom_push(key="extract_file_path", value=output_path)
 
 
 def _transform_news(s3_conn_id: str, ti: TaskInstance) -> str:
@@ -101,17 +101,34 @@ def _transform_news(s3_conn_id: str, ti: TaskInstance) -> str:
     :return: 정제된 뉴스 Parquet 파일 경로
     :rtype:
     """
-    mkdirs_if_not_exists(YFINANCE_NEWS_META_TEMP_PATH)
     df = pd.read_parquet(YFINANCE_NEWS_DIR_TEMP_PATH)
     hook = S3ParquetHook(conn_id=s3_conn_id or "aws_conn")
     meta_df = hook.get_files(S3_NEWS_META_PATH)
-    output_path = f"{YFINANCE_NEWS_META_TEMP_PATH}/{ti.execution_date.strftime('%Y-%m-%d')}.parquet"
 
     cleaner = YFinanceNewsCleaner(df)
-    cleaner.filter_duplicates_by_meta(meta_df, keys=["content_id", "company_key"])
+    if meta_df is not None:
+        cleaner.filter_duplicates_by_meta(meta_df, keys=["content_id", "company_key"])
 
-    cleaner.target.to_parquet(output_path)
+    mkdirs_if_not_exists(YFINANCE_NEWS_CLEANED_TEMP_PATH)
+    output_path = f"{YFINANCE_NEWS_CLEANED_TEMP_PATH}/{ti.execution_date.strftime('%Y-%m-%d')}.parquet"
+    cleaner.select().to_parquet(output_path)
     return output_path
+
+
+def _update_news_meta(ti: TaskInstance, **kwargs):
+    """
+    S3에 저장된 뉴스 메타데이터를 업데이트합니다.
+    :param ti: TaskInstance
+    :param kwargs:
+    :return:
+    :rtype:
+    """
+    extract_file_path = ti.xcom_pull(key="extract_file_path")
+    logging.info(f"target path: {extract_file_path}")
+    new_meta_df = pd.read_parquet(extract_file_path)[["content_id", "company_key"]]
+
+    s3_hook = S3ParquetHook(conn_id="aws_conn")
+    s3_hook.upload_df(new_meta_df, path=S3_NEWS_META_PATH, mode="overwrite")
 
 
 def _load_temp_to_s3(conn_id: str, ti: TaskInstance) -> str:
@@ -126,10 +143,6 @@ def _load_temp_to_s3(conn_id: str, ti: TaskInstance) -> str:
     hook = S3ParquetHook(conn_id)
 
     df = pd.read_parquet(ti.xcom_pull(key="return_value"))
-    meta_df = df[["content_id", "company_key"]]
-
-    if not meta_df.empty:
-        hook.upload_df(meta_df, path=S3_NEWS_META_PATH, mode="append")
 
     if not df.empty:
         hook.upload_split_df(
@@ -172,14 +185,21 @@ with DAG(
             op_kwargs={"s3_conn_id": "aws_conn"},
         )
 
+        update_news_meta = PythonOperator(
+            task_id="update_news_meta",
+            python_callable=_update_news_meta,
+            trigger_rule=TriggerRule.NONE_FAILED_OR_SKIPPED,
+        )
+
         load_temp_to_s3 = PythonOperator(
             task_id="load_temp_to_s3",
             python_callable=_load_temp_to_s3,
             op_kwargs={"conn_id": "aws_conn"},
-            trigger_rule=TriggerRule.NONE_FAILED,
+            trigger_rule=TriggerRule.NONE_FAILED_OR_SKIPPED,
         )
 
         extract_yfinance_news >> transform_news >> load_temp_to_s3
+        [extract_yfinance_news, transform_news] >> update_news_meta
 
     teardown = PythonOperator(
         task_id="teardown",
